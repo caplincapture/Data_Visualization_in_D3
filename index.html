@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    body {
+        font: 10px sans-serif;
+    }
+    
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+    
+    .x.axis path {
+        ;
+    }
+    /* Creating the tip hover blurb */
+    
+    .toolTip {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        position: absolute;
+        display: none;
+        width: auto;
+        height: auto;
+        background: none repeat scroll 0 0 white;
+        border: 0 none;
+        border-radius: 8px 8px 8px 8px;
+        box-shadow: -3px 3px 15px #888888;
+        color: black;
+        font: 12px sans-serif;
+        padding: 5px;
+        text-align: center;
+    }
+</style>
+
+<body>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js">
+    </script>
+
+    <script>
+        /* Setting margins, scales, and borders */
+        var margin = {
+                top: 50,
+                right: 20,
+                bottom: 100,
+                left: 200
+            },
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var x0 = d3.scale.ordinal()
+            .rangeRoundBands([0, width], .1);
+
+        var x1 = d3.scale.ordinal();
+
+        var y = d3.scale.linear()
+            .range([height, 0])
+            .nice();
+
+        /* Introduces tooltip as a variable to be called on hover */
+
+        var divTooltip = d3.select("body").append("div").attr("class", 
+          "toolTip");
+
+
+        var color = d3.scale.ordinal()
+            .range(["#af8dc3", "#7fbf7b", "#7b6888", "#6b486b", "#a05d56",
+             "#d0743c", "#ff8c00"]);
+
+        /* Axes and borders set */
+        var xAxis = d3.svg.axis()
+            .scale(x0)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .tickFormat(d3.format(".2s"));
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + 
+              ")");
+
+
+
+        d3.csv("data.csv", function(error, data) {
+            if (error) throw error;
+
+            var publics = d3.keys(data[0]).filter(function(key) {
+                return key !== "Characteristics";
+            });
+
+            data.forEach(function(d) {
+                d.populace = publics.map(function(name) {
+                    return {
+                        name: name,
+                        value: +d[name]
+                    };
+                });
+            });
+
+            x0.domain(data.map(function(d) {
+                return d.Characteristics;
+            }));
+            x1.domain(publics).rangeRoundBands([0, x0.rangeBand()]);
+            y.domain([0, d3.max(data, function(d) {
+                return d3.max(d.populace,
+                    function(d) {
+                        return d.value;
+                    });
+            })]);
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+            /* Adding a x axis label*/
+            svg.append("text")
+                .attr("text-anchor", "middle")
+                // this makes it easy to centre the text as the transform 
+                //is applied to the anchor
+                .attr("transform", "translate(" + (width / 2) + "," + 
+                  (height + 50) + ")rotate(0)")
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "20px")
+                // text is drawn off the screen top left, move down and out 
+                // and rotate
+                .text("Characteristic");
+
+            svg.append("text")
+                .attr("text-anchor", "middle")
+                // this makes it easy to centre the text as the transform is 
+                // applied to the anchor //
+                .attr("transform", "translate(" + (width / 2) + "," +
+                    (height + margin.bottom - 5) + ")rotate(0)")
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "15px") // text is drawn off the screen top
+                // left, move down and out and rotate //
+                .text("Non-Muslims tend to hold a more favorable opinion \
+                  of Muslims than vice-versa.");
+
+            /* Adding a title*/
+            svg.append("text")
+                .attr("x", (width / 2))
+                .attr("y", 0 - (17 * margin.top / 28))
+                .attr("text-anchor", "middle")
+                .style("font-size", "25px")
+                .style("text-decoration", "underline")
+                .text("How Muslims and Westerners View Each Other");
+
+            /* Text wrapping function for description */
+            function wrap(text, width) {
+                text.each(function() {
+                  var text = d3.select(this),
+                    words = "The Pew Research Center conducted polling of Muslim\
+                     people in Muslim-majority countries and non-Muslim\
+                      Westerners.  Each group was asked to associate 10\
+                       behavioral traits with the other group.  Four positive\
+                        traits were surveyed, including honesty, tolerance, and\
+                         generosity, and six negative traits were surveyed,\
+                          including arrogance, greediness, and respect for women."
+                          .split(/\s+/).reverse(),
+                    word,
+                    line = [],
+                    lineNumber = 0,
+                    lineHeight = 1.1, // ems
+                    y = text.attr("y"),
+                    dy = parseFloat(text.attr("dy")) || 0,
+                    tspan = text.text(null).append("tspan").attr("x", 0)
+                    .attr("y", y).attr("dy", dy + "em");
+                  while (word = words.pop()) {
+                    line.push(word);
+                    tspan.text(line.join(" "));
+                    if (tspan.node().getComputedTextLength() > width) {
+                      line.pop();
+                      tspan.text(line.join(" "));
+                      line = [word];
+                      tspan = text.append("tspan").attr("x", 0)
+                      .attr("y", y).attr("dy", ++lineNumber * 
+                      lineHeight + dy + "em").text(word);
+                    }
+                  }
+                });
+            }  
+            
+            /* Adding text to graphic */
+            svg.append("text")
+              .attr("class", "node")
+              .attr("x", (width / 2))
+              .attr("y", 0 - (margin.top / 3))
+              .style("font-size", "9px")
+              .call(wrap, 780);
+
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .append("text")
+                .attr("transform", "translate(" + (0) + "," + (height / 4) + 
+                  ")rotate(-90)")
+                .attr("y", -60)
+                .attr("dy", ".71em")
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "20px")
+                .style("text-anchor", "end")
+                .text("Percent in Agreement");
+
+            var characteristic = svg.selectAll(".Characteristics")
+                .data(data)
+                .enter().append("g")
+                .attr("class", "Characteristics")
+                .attr("transform", function(d) {
+                    return "translate(" + x0(d.Characteristics) + ",0)";
+                });
+
+            /* Creating the bars of the bar chart */
+
+            characteristic.selectAll("rect")
+                .data(function(d) {
+                    return d.populace;
+                })
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("width", x1.rangeBand())
+                .attr("x", function(d) {
+                    return x1(d.name);
+                })
+                .attr("y", function(d) {
+                    return y(d.value);
+                })
+                .attr("height", function(d) {
+                    return height - y(d.value);
+                })
+                .style("fill", function(d) {
+                    return color(d.name);
+                });
+
+            /* Mouse tooltip hovering yielding blurb*/
+            characteristic
+                .on("mousemove", function(d) {
+                    divTooltip.style("left", d3.event.pageX + 10 + "px");
+                    divTooltip.style("top", d3.event.pageY - 25 + "px");
+                    divTooltip.style("display", "inline-block");
+                    var x = d3.event.pageX,
+                        y = d3.event.pageY
+                    var elements = document.querySelectorAll(':hover');
+                    l = elements.length
+                    l = l - 1
+                    elementData = elements[l].__data__
+                    divTooltip.html(elementData.name + "<br>" + 
+                      elementData.value + "%");
+                });
+            characteristic
+                .on("mouseout", function(d) {
+                    divTooltip.style("display", "none");
+                });
+
+
+            var legend = svg.selectAll(".legend")
+                .data(publics.slice().reverse())
+                .enter().append("g")
+                .attr("class", "legend")
+                .attr("transform", function(d, i) {
+                    return "translate(0," + i * 20 + ")";
+                });
+
+            /* Adding a legend */
+            legend.append("rect")
+                .attr("x", width - 18)
+                .attr("width", 18)
+                .attr("height", 18)
+                .style("fill", color);
+
+            legend.append("text")
+                .attr("x", width - 24)
+                .attr("y", 9)
+                .attr("dy", ".35em")
+                .style("text-anchor", "end")
+                .text(function(d) {
+                    return d;
+                });
+
+        });
+    </script>

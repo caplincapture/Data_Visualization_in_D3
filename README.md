@@ -1,7 +1,7 @@
 **Summary**
 
 
-I plotted survey data of people surveyed in the Muslim and Western world from the Pew Research Center.  Muslim people in Muslim-majority countries and non-Muslim Westerners were asked to associate 10 behavioral traits with the other group.  Four positive traits were surveyed, including honesty, tolerance, and generosity, and six negative traits were surveyed, including arrogance, greediness, and respect for women.  
+This project plots survey data from the Pew Research Center of people in Muslim-majority countries and Western countries.  Muslim people in Muslim-majority countries and non-Muslim Westerners were asked to associate 10 behavioral traits with the other group.  Four positive traits were surveyed, including honesty, tolerance, and generosity, and six negative traits were surveyed, including arrogance, greediness, and respect for women.  
 
 
 Non-Muslims tend to hold a more favorable opinion of Muslims than vice-versa.  
